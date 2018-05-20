@@ -1,0 +1,117 @@
+#import libraries
+import pandas as pd
+import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
+
+#import dataset
+dataset = pd.read_csv('spam.csv', encoding='latin-1')
+
+#drop classes
+dataset = dataset.drop(['Unnamed: 2','Unnamed: 3','Unnamed: 4'], axis = 1)
+dataset = dataset.rename(columns = {'v1': 'label', 'v2':'sms'})
+
+#describe data
+describe = dataset.groupby('label').describe()
+
+#check length of spam and ham sms
+dataset['length'] = dataset['sms'].apply(len)
+
+#check length dependency on label
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+mpl.rcParams['patch.force_edgecolor'] = True
+plt.style.use('seaborn-bright')
+dataset.hist(column='length', by='label', bins=50,figsize=(11,5))
+
+#treat categorical label class
+dict = {'ham':0,'spam':1}
+dataset['label'] = dataset['label'].map(dict)
+dataset.head()
+
+#split train and test 
+x = dataset.iloc[:, 1:]
+y = dataset.iloc[:, 0]
+
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+
+x_train.count()
+x_test.count()
+y_train.count()
+y_test.count()
+
+
+#text preprocessing on training set 
+
+"""
+convert text to word count vectors with CountVectorizer.
+convert text to word frequency vectors with TfidfVectorizer.
+convert text to unique integers with HashingVectorizer.
+
+https://machinelearningmastery.com/prepare-text-data-machine-learning-scikit-learn/
+"""
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+vect = CountVectorizer()
+vect.fit(x_train['sms'])
+
+"""vect.fit function learns the vocabulary. We can get all the feature names from vect.get_feature_names( ). """
+
+print(vect.get_feature_names()[0:20])
+print(vect.get_feature_names()[-20:])
+x_train_Without_len = vect.fit_transform(x_train['sms'])
+type(x_train_Without_len)
+
+"""Now, let's transform the Test data."""
+x_test_Without_len = vect.transform(x_test['sms'])
+
+
+""" add len feature """
+lf1 = x_train['length'].as_matrix()
+x_train_with_len = np.hstack((x_train_Without_len.todense(),lf1[:, None]))
+lf2 = x_test['length'].as_matrix()
+x_test_with_len = np.hstack((x_test_Without_len.todense(),lf2[:, None]))
+
+
+"""fit model without len feature """
+from sklearn.naive_bayes import MultinomialNB
+classifier1 = MultinomialNB()
+classifier1.fit(x_train_Without_len,y_train)
+
+y_pred_without_len = classifier1.predict(x_test_Without_len)
+
+#testing model
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+accuracy1 = accuracy_score(y_test,y_pred_without_len)
+
+#create confusion matrix
+confusion_matrix1 = confusion_matrix(y_test,y_pred_without_len) 
+
+#create clssification report
+classification_report1 = classification_report(y_test, y_pred_without_len, target_names = ["Ham", "Spam"])
+
+
+
+
+"""fit model with len feature"""
+from sklearn.naive_bayes import MultinomialNB
+classifier2 = MultinomialNB()
+classifier2.fit(x_train_with_len,y_train)
+
+y_pred_with_len = classifier2.predict(x_test_with_len)
+
+#testing model
+from sklearn.metrics import accuracy_score,confusion_matrix,classification_report
+accuracy2 = accuracy_score(y_test,y_pred_with_len)
+
+#create confusion matrix
+confusion_matrix2 = confusion_matrix(y_test,y_pred_with_len) 
+
+#create clssification report
+classification_report2 = classification_report(y_test, y_pred_with_len, target_names = ["Ham", "Spam"])
+
+
+
+""" todo use TfidfVectorizer """
