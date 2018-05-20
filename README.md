@@ -25,9 +25,6 @@ To DO:
 
 Read:
 
-Read about CountVectorizer, TfidfVectorizer, HashingVectorizer
-convert text to word count vectors with CountVectorizer.
-convert text to word frequency vectors with TfidfVectorizer.
-convert text to unique integers with HashingVectorizer.
+Read about CountVectorizer(text to word count vectors), TfidfVectorizer(text to word frequency vectors), HashingVectorizer(text to unique integers)
 
 https://machinelearningmastery.com/prepare-text-data-machine-learning-scikit-learn/
